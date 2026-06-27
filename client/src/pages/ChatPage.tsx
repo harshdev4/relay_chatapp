@@ -96,6 +96,7 @@ export default function ChatPage() {
     ? getOtherUser(activeConversation, users, user?.id)
     : undefined;
   const isTyping = activeConversationId ? typingUsers[activeConversationId] : false;
+  const [selectedUser, setSelectedUser] = useState<string>("");
 
   useEffect(() => {
     if (!conversations.length) return;
@@ -147,17 +148,13 @@ export default function ChatPage() {
 
   function handleSelect(otherUserId: string, existingConversationId?: string) {
     setMobileSidebarOpen(false);
-
+    setSelectedUser(otherUserId);
     if (existingConversationId) {
       setActiveConversation(existingConversationId);
       return;
     }
 
-    // No conversation exists with this user yet — create it, then switch
-    // to it once the server responds. getOrCreateConversation is
-    // idempotent, so this is safe even if one was created concurrently
-    // (e.g. the other user messaged first) between page load and this click.
-    startConversation.mutate(otherUserId, {
+    startConversation.mutate(selectedUser, {
       onSuccess: (newConversation) => {
         setActiveConversation(newConversation.id);
       },
@@ -201,6 +198,13 @@ export default function ChatPage() {
       emitTyping(activeConversationId, false, activeUser.id);
     }
 
+    // if (messages.length == 0) {
+    //   startConversation.mutate(selectedUser, {
+    //     onSuccess: (newConversation) => {
+    //       setActiveConversation(newConversation.id);
+    //     },
+    //   });
+    // }
     sendMessage.mutate(
       { conversationId: activeConversationId, text: trimmed },
       {
@@ -222,14 +226,13 @@ export default function ChatPage() {
   return (
     <div className={styles.layout}>
       <button
-        className={`${styles.mobileOverlay} ${
-          mobileSidebarOpen ? styles.mobileOverlayVisible : ''
-        }`}
+        className={`${styles.mobileOverlay} ${mobileSidebarOpen ? styles.mobileOverlayVisible : ''
+          }`}
         aria-label="Close conversation list"
         onClick={() => setMobileSidebarOpen(false)}
       />
 
-      <aside className={`${styles.sidebar} ${mobileSidebarOpen ? styles.sidebarOpen : ''}`}>
+      <aside className={`${styles.sidebar} ${(mobileSidebarOpen || !activeConversation) ? styles.sidebarOpen : ''} ${!activeConversation && styles.widthfull} `}>
         <div className={styles.sidebarHeader}>
           <div className={styles.sidebarTopRow}>
             <div className={styles.sidebarTitle}>
@@ -244,7 +247,7 @@ export default function ChatPage() {
                 <Settings size={18} />
               </Link>
               <button
-                className={`${styles.iconBtn} ${styles.mobileMenuBtn}`}
+                className={`${styles.iconBtn} ${styles.mobileMenuBtn} ${!activeConversation && styles.displayNone}`}
                 type="button"
                 onClick={() => setMobileSidebarOpen(false)}
                 aria-label="Close sidebar"
@@ -274,9 +277,8 @@ export default function ChatPage() {
                   layout
                   key={otherUser.id}
                   type="button"
-                  className={`${styles.conversationItem} ${
-                    active ? styles.conversationItemActive : ''
-                  } ${unreadCount > 0 && !active ? styles.conversationItemUnread : ''}`}
+                  className={`${styles.conversationItem} ${active ? styles.conversationItemActive : ''
+                    } ${unreadCount > 0 && !active ? styles.conversationItemUnread : ''}`}
                   onClick={() => handleSelect(otherUser.id, conversation?.id)}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -349,9 +351,8 @@ export default function ChatPage() {
                   return (
                     <motion.div
                       key={message.id}
-                      className={`${styles.messageRow} ${
-                        sent ? styles.messageRowSent : styles.messageRowReceived
-                      }`}
+                      className={`${styles.messageRow} ${sent ? styles.messageRowSent : styles.messageRowReceived
+                        }`}
                       initial={{ opacity: 0, y: 12 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0 }}
@@ -415,7 +416,7 @@ export default function ChatPage() {
                 <button
                   className={styles.sendBtn}
                   type="button"
-                  onClick={handleSend}
+                  onClick={() => handleSend()}
                   disabled={!draft.trim() || sendMessage.isPending}
                   aria-label="Send message"
                 >

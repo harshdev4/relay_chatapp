@@ -101,6 +101,7 @@ export const sendMessage = async (req, res) => {
     // sender up to this point (mirrors frontend mock behavior).
     if (!conversation.lastReadAt) conversation.lastReadAt = new Map();
     conversation.lastReadAt.set(req.user._id.toString(), message.createdAt);
+    conversation.lastDeliveredAt = new Date();
     await conversation.save();
 
     const io = req.app.get("io");

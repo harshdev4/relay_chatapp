@@ -33,7 +33,7 @@ export const getConversations = async (req, res) => {
       participants: req.user._id,
     })
       .populate("lastMessage")
-      .sort({ updatedAt: -1 });
+      .sort({ lastDeliveredAt: -1 });
 
     const formatted = await Promise.all(
       conversations.map(async (convo) => {
@@ -41,7 +41,7 @@ export const getConversations = async (req, res) => {
         return formatConversation(convo, unreadCount);
       })
     );
-
+    
     return res.status(200).json(formatted);
   } catch (error) {
     console.error(error);

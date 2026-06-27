@@ -72,6 +72,7 @@ export const formatConversation = (conversation, unreadCount = 0) => {
       ? formatMessage(conversation.lastMessage)
       : null,
     unreadCount,
-    updatedAt: new Date(conversation.updatedAt).toISOString(),
+
+    updatedAt: new Date(conversation.lastDeliveredAt || conversation.createdAt).toISOString(),
   };
 };

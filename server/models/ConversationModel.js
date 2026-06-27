@@ -26,6 +26,9 @@ const conversationSchema = new mongoose.Schema(
       of: Date,
       default: {},
     },
+    lastDeliveredAt: {
+      type: Date
+    },
   },
   {
     timestamps: true,
